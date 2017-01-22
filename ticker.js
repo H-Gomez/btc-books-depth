@@ -3,61 +3,51 @@ var request = require('request');
 var WebSocket = require('ws');
 
 // Global vars
-const ws = new WebSocket('wss://api.bitfinex.com/ws/2');
+const webSocket = new WebSocket('wss://api.bitfinex.com/ws/2');
 const ob = {
     event: 'subscribe',
     channel: 'book',
     symbol: 'tBTCUSD',
     prec: 'P2'
 };
+
+var ticker = {};
 var payload = JSON.stringify(ob);
-var targetUrl = "https://api.bitfinex.com/v2/ticker/tBTCUSD"
-var books = [];
+var targetUrl = "https://api.bitfinex.com/v2/ticker/tBTCUSD";
 var percentage = 5;
 
-
-function calculatePercent(price, percentage) {
-    return (price / 100) * percentage;
-}
-
-
-var msg = JSON.stringify({
+// Payloads
+var payloadTicker = JSON.stringify({
     event: 'subscribe',
     channel: 'ticker',
     symbol: 'tBTCUSD'
 });
 
-ws.on('open', function() {
-    ws.send(msg);
+function calculatePercent(price, percentage) {
+    return ((price / 100) * percentage).toFixed(2);
+}
+
+// API work
+webSocket.on('open', function() {
+    webSocket.send(payloadTicker);
 });
 
-ws.on('message', function(msg){
+webSocket.on('message', function(msg) {
     var response = JSON.parse(msg);
+
     if (response.event) {
-        console.log(msg)
+        console.log(response);
     }
-    else if (response[1] === "hb"){
+    else if (response[1] === "hb") {
         console.log("polling server...");
     }
     else {
-        var p = JSON.parse(msg);
-        var price = p[1][2];
-        var downPercent = price - calculatePercent(price, percentage);
+        ticker.bid = response[1][0];
+        ticker.ask =response[1][2];
+        ticker.price = response[1][6];
+        ticker.down5 = ticker.price - calculatePercent(ticker.price, percentage);
+        ticker.up5 = parseInt(ticker.price) + parseInt(calculatePercent(ticker.price, percentage));
 
-        console.log("BTC price: " + price + " 5% down: " + downPercent);
+        console.log(ticker);
     }
 });
-
-
-
-
-
-//
-//ws.onmessage = function(msg) {
-//    console.log(msg.data);
-//};
-//
-//// Subscribe to ticker.
-//ws.on('open', function() {
-//    ws.send(payload);
-//});
