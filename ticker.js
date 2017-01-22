@@ -4,15 +4,14 @@ const WebSocket = require('ws');
 
 // Global vars
 const webSocket = new WebSocket('wss://api.bitfinex.com/ws/2');
-const ob = {
-    event: 'subscribe',
-    channel: 'book',
-    symbol: 'tBTCUSD',
-    prec: 'P2'
-};
+//const ob = {
+//    event: 'subscribe',
+//    channel: 'book',
+//    symbol: 'tBTCUSD',
+//    prec: 'P2'
+//};
 
 var ticker = { };
-var payload = JSON.stringify(ob);
 var targetUrl = "https://api.bitfinex.com/v2/book/tBTCUSD/P2?len=100";
 var percentage = 5;
 
@@ -23,11 +22,16 @@ var payloadTicker = JSON.stringify({
     symbol: 'tBTCUSD'
 });
 
+// Helper functions
 function calculatePercent(price, percentage) {
     return ((price / 100) * percentage).toFixed(2);
 }
 
-// API work
+function convertCurrency(price, sumOfOrders) {
+    return price * sumOfOrders.toFixed(2);
+}
+
+// WebSocket Work - Subscribe to the ticker channel for price updates.
 webSocket.on('open', function() {
     webSocket.send(payloadTicker);
 });
@@ -48,20 +52,20 @@ webSocket.on('message', function(msg) {
         ticker.down5 = ticker.price - calculatePercent(ticker.price, percentage);
         ticker.up5 = parseInt(ticker.price) + parseInt(calculatePercent(ticker.price, percentage));
 
-        console.log(ticker);
+        console.log("Price: $" + ticker.price);
         sumOrders();
     }
 });
 
-// REST API use
+// REST Work - Poll the api for order book data.
 function sumOrders() {
     request(targetUrl, function(error, response, body) {
         if (!error && response.statusCode == 200) {
-            let orders = JSON.parse(body);
-            let bidSum = 0;
-            let askSum = 0;
+            var orders = JSON.parse(body);
+            var bidSum = 0;
+            var askSum = 0;
 
-            for (let i = 0; i < orders.length; i++) {
+            for (var i = 0; i < orders.length; i++) {
                 if(orders[i][0] < ticker.price && orders[i][0] > ticker.down5) {
                     bidSum += parseInt(orders[i][2], 10);
                 }
@@ -70,7 +74,13 @@ function sumOrders() {
                 }
             }
 
-            console.log("Bids: " + bidSum + " | " + "Asks: " + askSum);
+            console.log("Bids 5%: " + bidSum + " | " + "Asks 5%: " + askSum);
+
+            var bidDollarValue = convertCurrency(ticker.price, bidSum);
+            var askDollarValue = convertCurrency(ticker.price, askSum);
+            console.log('Bids: $' + bidDollarValue.toLocaleString());
+            console.log('Asks: $' + askDollarValue.toLocaleString());
+            console.log("---------------------");
         }
     });
 }
