@@ -7,6 +7,7 @@ const wsUrl = 'wss://api.bitfinex.com/ws/2';
 const restUrl = 'https://api.bitfinex.com/v2/book/tBTCUSD/P2?len=100';
 const percentage = 5;
 var ticker = { };
+var tickerSnapshot = { };
 var payloadTicker = JSON.stringify({
     event: 'subscribe',
     channel: 'ticker',
@@ -44,35 +45,39 @@ webSocket.on('message', function(data) {
         ticker.price = response[1][6];
         ticker.lowerPercentage = ticker.price - calculatePercent(ticker.price, percentage);
         ticker.upperPercentage = parseInt(ticker.price) + parseInt(calculatePercent(ticker.price, percentage));
+        ticker.orders = { };
 
-        console.log("Price: $" + ticker.price);
-        sumOrders();
+        sumOrders(ticker.orders, function() {
+            console.log("Price: $" + ticker.price);
+            console.log("Bids 5%: " + ticker.orders.bidSum + " | " + "Asks 5%: " + ticker.orders.askSum);
+            console.log('Bids: $' + ticker.orders.bidDollarValue.toLocaleString());
+            console.log('Asks: $' + ticker.orders.askDollarValue.toLocaleString());
+            console.log("---------------------"); // divider for more readable output
+        });
     }
 });
 
 // REST Work - Poll the api for order book data.
-function sumOrders() {
+function sumOrders(tickerOrders, callback) {
     request(restUrl, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var orders = JSON.parse(body);
-            var bidSum = 0;
-            var askSum = 0;
+            tickerOrders.bidSum = 0;
+            tickerOrders.askSum = 0;
 
+            // Sum orders up to the percentage price difference. (5%)
             orders.forEach(function(order) {
                 if (order[0] < ticker.price && order[0] > ticker.lowerPercentage) {
-                    bidSum += parseInt(order[2]);
+                    tickerOrders.bidSum += parseInt(order[2]);
                 } else if (order[0] > ticker.price && order[0] < ticker.upperPercentage) {
-                    askSum -= parseInt(order[2]);
+                    tickerOrders.askSum -= parseInt(order[2]);
                 }
             });
 
-            var bidDollarValue = convertCurrency(ticker.price, bidSum);
-            var askDollarValue = convertCurrency(ticker.price, askSum);
+            tickerOrders.bidDollarValue = convertCurrency(ticker.price, tickerOrders.bidSum);
+            tickerOrders.askDollarValue = convertCurrency(ticker.price, tickerOrders.askSum);
 
-            console.log("Bids 5%: " + bidSum + " | " + "Asks 5%: " + askSum);
-            console.log('Bids: $' + bidDollarValue.toLocaleString());
-            console.log('Asks: $' + askDollarValue.toLocaleString());
-            console.log("---------------------"); // divider for more readable output
+            callback();
         }
     });
 }
