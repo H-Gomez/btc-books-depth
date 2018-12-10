@@ -5,59 +5,71 @@ const WebSocket = require('ws');
 // Global vars
 const wsUrl = 'wss://api.bitfinex.com/ws/2';
 const restUrl = 'https://api.bitfinex.com/v2/book/tBTCUSD/P2?len=100';
-const percentage = 5;
-var ticker = { };
-var tickerSnapshot = { };
+const percentage = 10;
+var ticker = {};
+var tickerSnapshot = {};
 var payloadTicker = JSON.stringify({
     event: 'subscribe',
     channel: 'ticker',
     symbol: 'tBTCUSD'
 });
 
-// Helper functions
+/**
+ * Calculates the percentage of one value from another.
+ * @param {int} price
+ * @param {int} percentage
+ */
 function calculatePercent(price, percentage) {
     return ((price / 100) * percentage).toFixed(2);
 }
 
+/**
+ * Converts a int to a human readble currency value.
+ * @param {int} price
+ * @param {array} sumOfOrders
+ */
 function convertCurrency(price, sumOfOrders) {
     return price * sumOfOrders.toFixed(2);
 }
 
 // WebSocket Work - Subscribe to the ticker channel for price updates.
 var webSocket = new WebSocket(wsUrl);
-
 webSocket.on('open', function() {
     webSocket.send(payloadTicker);
 });
 
+/**
+ * The main websocket subscriber to the API. Outputs to console. 
+ */
 webSocket.on('message', function(data) {
     var response = JSON.parse(data);
 
     if (response.event) {
         console.log(response);
-    }
-    else if (response[1] === 'hb') {
+    } else if (response[1] === 'hb') {
         console.log('polling server...');
-    }
-    else {
+    } else {
         ticker.bid = response[1][0];
-        ticker.ask =response[1][2];
+        ticker.ask = response[1][2];
         ticker.price = response[1][6];
         ticker.lowerPercentage = ticker.price - calculatePercent(ticker.price, percentage);
         ticker.upperPercentage = parseInt(ticker.price) + parseInt(calculatePercent(ticker.price, percentage));
-        ticker.orders = { };
+        ticker.orders = {};
 
         sumOrders(ticker.orders, function() {
-            console.log("Price: $" + ticker.price);
-            console.log("Bids 5%: " + ticker.orders.bidSum + " | " + "Asks 5%: " + ticker.orders.askSum);
-            console.log('Bids: $' + ticker.orders.bidDollarValue.toLocaleString());
-            console.log('Asks: $' + ticker.orders.askDollarValue.toLocaleString());
-            console.log("---------------------"); // divider for more readable output
+            console.log(`Price: $ ${ticker.price}`);
+            console.log(`Bids 10%: ${ticker.orders.bidSum} ($${ticker.orders.bidDollarValue.toLocaleString()})`);
+            console.log(`Asks 10%: ${ticker.orders.askSum} ($${ticker.orders.askDollarValue.toLocaleString()})`);
+            console.log('---------------------'); // divider for more readable output
         });
     }
 });
 
-// REST Work - Poll the api for order book data.
+/**
+ * Calculates the bid/ask depth at a percentage distance from the current price.
+ * @param {object} tickerOrders
+ * @param {function} callback
+ */
 function sumOrders(tickerOrders, callback) {
     request(restUrl, function(error, response, body) {
         if (!error && response.statusCode == 200) {
@@ -65,7 +77,7 @@ function sumOrders(tickerOrders, callback) {
             tickerOrders.bidSum = 0;
             tickerOrders.askSum = 0;
 
-            // Sum orders up to the percentage price difference. (5%)
+            // Sum orders up to the percentage price difference.
             orders.forEach(function(order) {
                 if (order[0] < ticker.price && order[0] > ticker.lowerPercentage) {
                     tickerOrders.bidSum += parseInt(order[2]);
