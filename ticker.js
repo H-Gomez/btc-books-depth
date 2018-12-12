@@ -15,17 +15,17 @@ var payloadTicker = JSON.stringify({
 });
 
 /**
- * Calculates the percentage of one value from another.
- * @param {int} price
- * @param {int} percentage
+ * Calculates the percentage of one value from another and returns it as a string fixed to 2 decimals places.
+ * @param {number} price
+ * @param {number} percentage
  */
 function calculatePercent(price, percentage) {
-    return ((price / 100) * percentage).toFixed(2);
+    return ((price / 100) * percentage);
 }
 
 /**
- * Converts a int to a human readble currency value.
- * @param {int} price
+ * Converts a number to a human readble currency value.
+ * @param {number} price
  * @param {array} sumOfOrders
  */
 function convertCurrency(price, sumOfOrders) {
@@ -39,7 +39,7 @@ webSocket.on('open', function() {
 });
 
 /**
- * The main websocket subscriber to the API. Outputs to console. 
+ * The main websocket subscriber to the API. Outputs to console.
  */
 webSocket.on('message', function(data) {
     var response = JSON.parse(data);
@@ -53,7 +53,7 @@ webSocket.on('message', function(data) {
         ticker.ask = response[1][2];
         ticker.price = response[1][6];
         ticker.lowerPercentage = ticker.price - calculatePercent(ticker.price, percentage);
-        ticker.upperPercentage = parseInt(ticker.price) + parseInt(calculatePercent(ticker.price, percentage));
+        ticker.upperPercentage = parseInt(ticker.price) + (calculatePercent(ticker.price, percentage));
         ticker.orders = {};
 
         sumOrders(ticker.orders, function() {
@@ -93,3 +93,8 @@ function sumOrders(tickerOrders, callback) {
         }
     });
 }
+
+module.exports = {
+    convertCurrency: convertCurrency,
+    calculatePercent: calculatePercent
+};
