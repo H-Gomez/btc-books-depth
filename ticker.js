@@ -11,7 +11,8 @@ var tickerSnapshot = {};
 var payloadTicker = JSON.stringify({
     event: 'subscribe',
     channel: 'ticker',
-    symbol: 'tBTCUSD'
+    symbol: 'tBTCUSD',
+    length: 100
 });
 
 /**
@@ -20,7 +21,7 @@ var payloadTicker = JSON.stringify({
  * @param {number} percentage
  */
 function calculatePercent(price, percentage) {
-    return ((price / 100) * percentage);
+    return (price / 100) * percentage;
 }
 
 /**
@@ -53,7 +54,7 @@ webSocket.on('message', function(data) {
         ticker.ask = response[1][2];
         ticker.price = response[1][6];
         ticker.lowerPercentage = ticker.price - calculatePercent(ticker.price, percentage);
-        ticker.upperPercentage = parseInt(ticker.price) + (calculatePercent(ticker.price, percentage));
+        ticker.upperPercentage = parseInt(ticker.price) + calculatePercent(ticker.price, percentage);
         ticker.orders = {};
 
         sumOrders(ticker.orders, function() {
