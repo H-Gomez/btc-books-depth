@@ -7,7 +7,6 @@ const wsUrl = 'wss://api.bitfinex.com/ws/2';
 const restUrl = 'https://api.bitfinex.com/v2/book/tBTCUSD/P2?len=100';
 const percentage = 20;
 var ticker = {};
-var tickerSnapshot = {};
 var payloadTicker = JSON.stringify({
     event: 'subscribe',
     channel: 'ticker',
@@ -42,7 +41,7 @@ webSocket.on('open', function() {
 /**
  * The main websocket subscriber to the API. Outputs to console.
  */
-webSocket.on('message', function(data) {
+webSocket.on('message', data => {
     const response = JSON.parse(data);
 
     if (response.event) {
@@ -67,14 +66,14 @@ webSocket.on('message', function(data) {
  * @param {function} callback
  */
 function sumOrders(tickerOrders, callback) {
-    request(restUrl, function(error, response, body) {
+    request(restUrl, (error, response, body) => {
         if (!error && response.statusCode == 200) {
             const orders = JSON.parse(body);
             tickerOrders.bidSum = 0;
             tickerOrders.askSum = 0;
 
             // Sum orders up to the percentage price difference.
-            orders.forEach(function(order) {
+            orders.forEach((order) => {
                 if (order[0] < ticker.price && order[0] > ticker.lowerPercentage) {
                     tickerOrders.bidSum += parseInt(order[2]);
                 } else if (order[0] > ticker.price && order[0] < ticker.upperPercentage) {
