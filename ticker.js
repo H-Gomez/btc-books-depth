@@ -57,12 +57,7 @@ webSocket.on('message', function(data) {
         ticker.upperPercentage = parseInt(ticker.price) + calculatePercent(ticker.price, percentage);
         ticker.orders = {};
 
-        sumOrders(ticker.orders, function() {
-            console.log(`Price: $ ${ticker.price}`);
-            console.log(`Bids 20%: ${ticker.orders.bidSum} ($${ticker.orders.bidDollarValue.toLocaleString()})`);
-            console.log(`Asks 20%: ${ticker.orders.askSum} ($${ticker.orders.askDollarValue.toLocaleString()})`);
-            console.log('---------------------'); // divider for more readable output
-        });
+        sumOrders(ticker.orders, printTickerToConsole);
     }
 });
 
@@ -93,6 +88,13 @@ function sumOrders(tickerOrders, callback) {
             callback();
         }
     });
+}
+
+function printTickerToConsole() {
+    console.log(`Price: $ ${ticker.price}`);
+    console.log(`Bids 20%: ${ticker.orders.bidSum} ($${ticker.orders.bidDollarValue.toLocaleString()})`);
+    console.log(`Asks 20%: ${ticker.orders.askSum} ($${ticker.orders.askDollarValue.toLocaleString()})`);
+    console.log('---------------------'); // divider for more readable output
 }
 
 module.exports = {
