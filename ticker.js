@@ -5,7 +5,7 @@ const WebSocket = require('ws');
 // Global vars
 const wsUrl = 'wss://api.bitfinex.com/ws/2';
 const restUrl = 'https://api.bitfinex.com/v2/book/tBTCUSD/P2?len=100';
-const percentage = 10;
+const percentage = 20;
 var ticker = {};
 var tickerSnapshot = {};
 var payloadTicker = JSON.stringify({
@@ -34,7 +34,7 @@ function convertCurrency(price, sumOfOrders) {
 }
 
 // WebSocket Work - Subscribe to the ticker channel for price updates.
-var webSocket = new WebSocket(wsUrl);
+const webSocket = new WebSocket(wsUrl);
 webSocket.on('open', function() {
     webSocket.send(payloadTicker);
 });
@@ -43,7 +43,7 @@ webSocket.on('open', function() {
  * The main websocket subscriber to the API. Outputs to console.
  */
 webSocket.on('message', function(data) {
-    var response = JSON.parse(data);
+    const response = JSON.parse(data);
 
     if (response.event) {
         console.log(response);
@@ -59,8 +59,8 @@ webSocket.on('message', function(data) {
 
         sumOrders(ticker.orders, function() {
             console.log(`Price: $ ${ticker.price}`);
-            console.log(`Bids 10%: ${ticker.orders.bidSum} ($${ticker.orders.bidDollarValue.toLocaleString()})`);
-            console.log(`Asks 10%: ${ticker.orders.askSum} ($${ticker.orders.askDollarValue.toLocaleString()})`);
+            console.log(`Bids 20%: ${ticker.orders.bidSum} ($${ticker.orders.bidDollarValue.toLocaleString()})`);
+            console.log(`Asks 20%: ${ticker.orders.askSum} ($${ticker.orders.askDollarValue.toLocaleString()})`);
             console.log('---------------------'); // divider for more readable output
         });
     }
@@ -74,7 +74,7 @@ webSocket.on('message', function(data) {
 function sumOrders(tickerOrders, callback) {
     request(restUrl, function(error, response, body) {
         if (!error && response.statusCode == 200) {
-            var orders = JSON.parse(body);
+            const orders = JSON.parse(body);
             tickerOrders.bidSum = 0;
             tickerOrders.askSum = 0;
 
