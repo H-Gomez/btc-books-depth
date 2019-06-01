@@ -5,7 +5,7 @@ const WebSocket = require('ws');
 // Global vars
 const wsUrl = 'wss://api.bitfinex.com/ws/2';
 const restUrl = 'https://api.bitfinex.com/v2/book/tBTCUSD/P2?len=100';
-const percentage = 20;
+const percentage = 30;
 var ticker = {};
 var payloadTicker = JSON.stringify({
     event: 'subscribe',
@@ -73,7 +73,7 @@ function sumOrders(tickerOrders, callback) {
             tickerOrders.askSum = 0;
 
             // Sum orders up to the percentage price difference.
-            orders.forEach((order) => {
+            orders.forEach(order => {
                 if (order[0] < ticker.price && order[0] > ticker.lowerPercentage) {
                     tickerOrders.bidSum += parseInt(order[2]);
                 } else if (order[0] > ticker.price && order[0] < ticker.upperPercentage) {
@@ -90,9 +90,9 @@ function sumOrders(tickerOrders, callback) {
 }
 
 function printTickerToConsole() {
-    console.log(`Price: $ ${ticker.price}`);
-    console.log(`Bids 20%: ${ticker.orders.bidSum} ($${ticker.orders.bidDollarValue.toLocaleString()})`);
-    console.log(`Asks 20%: ${ticker.orders.askSum} ($${ticker.orders.askDollarValue.toLocaleString()})`);
+    console.log(`Price: $${ticker.price}`);
+    console.log(`Bids 30%: ${ticker.orders.bidSum} ($${ticker.orders.bidDollarValue.toLocaleString()})`);
+    console.log(`Asks 30%: ${ticker.orders.askSum} ($${ticker.orders.askDollarValue.toLocaleString()})`);
     console.log('---------------------'); // divider for more readable output
 }
 
