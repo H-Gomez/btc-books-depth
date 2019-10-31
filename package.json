@@ -5,7 +5,7 @@
   "main": "ticker.js",
   "dependencies": {
     "request": "^2.79.0",
-    "ws": "^1.1.1"
+    "ws": "^3.3.1"
   },
   "devDependencies": {
     "chai": "^4.2.0",
